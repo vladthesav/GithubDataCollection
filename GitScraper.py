@@ -89,25 +89,25 @@ class GitScraper:
         while stack:
             repo=stack.pop()
             try:
-            #commits
+                #commits
                 try:
                     commits = list(data_raw[repo]['object'].get_commits())
                 except Exception as e:
                     print(str(e)+'rgwregwrgwgr')
                     commits=[]
-            print('\t',len(commits), " commits")
-            while commits:
-                f=commits.pop()
-                time_created = get_date(f.url)
-                if in_range(event_l, time_created, event_h):
-                    data_raw[repo]['events'].append({'event-type':'PushEvent','author':str(f.author), 'comments':[], 'url':f.url, 'time':time_created})
+                print('\t',len(commits), " commits")
+                while commits:
+                    f=commits.pop()
+                    time_created = get_date(f.url)
+                    if in_range(event_l, time_created, event_h):
+                        data_raw[repo]['events'].append({'event-type':'PushEvent','author':str(f.author), 'comments':[], 'url':f.url, 'time':time_created})
     
-                    #now to get comments
-                    comments = list(f.get_comments())
-                    while comments:
-                        c=comments.pop()
-                        if in_range(event_l, str(c.created_at), event_h):
-                        data_raw[repo]['events'][-1]['comments'].append({'id':c.id,'time':str(c.created_at), 'login':c.user.login, 'comment':c.body})
+                        #now to get comments
+                        comments = list(f.get_comments())
+                        while comments:
+                            c=comments.pop()
+                            if in_range(event_l, str(c.created_at), event_h):
+                                data_raw[repo]['events'][-1]['comments'].append({'id':c.id,'time':str(c.created_at), 'login':c.user.login, 'comment':c.body})
             except Exception as e:
                 print(e)
                 time.sleep(100)

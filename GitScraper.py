@@ -25,7 +25,7 @@ class GitScraper:
   
         if lower <= time:
             if time <= upper:
-            return True
+                return True
         return False
 
     #gets repos that come up in query

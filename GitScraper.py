@@ -232,11 +232,13 @@ class GitScraper:
         #self.data_raw = data_raw
 
 
-repo_rng = ["2000-01-01 0:0:0", "2017-08-31 0:0:0"]
-event_rng = ["2015-01-01 00:00:00","2017-8-31 00:00:00"]
-scrappy = GitScraper("f7599bf79f708c5add325d4894184ebdae471f21", repo_rng,event_rng)
-data_raw = scrappy.get_repo("giantpune/android-vts")
-scrappy.get_data_for_repo(data_raw,"giantpune/android-vts")
+#repo_rng = ["2000-01-01 0:0:0", "2017-08-31 0:0:0"]
+#event_rng = ["2015-01-01 00:00:00","2017-8-31 00:00:00"]
+#scrappy = GitScraper("f7599bf79f708c5add325d4894184ebdae471f21", repo_rng,event_rng)
+
+#repo = "gianpune/android-vts"
+#data_raw = scrappy.get_repo(repo)
+#scrappy.get_data_for_repo(data_raw,repo)
 #print(data_raw.keys())
 #scrappy.get_forks(data_raw, "giantpune/android-vts", None)
 #scrappy.get_commits(data_raw, "giantpune/android-vts")

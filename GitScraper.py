@@ -19,6 +19,7 @@ def time_in_range(time, time_range):
             return True
     return False
 
+#because I don't feel like staring at a bunch of try/catch statements
 def do_thing(thing):
     try:
         thing
@@ -78,8 +79,9 @@ class GitScraper:
                 time.sleep(100)
         return data_raw
     
-    def get_repo(self, query):
+    def get_repo_data(self, query):
         repo = self.g.get_repo(query)
+        #print(repo)
         data_raw = {}
         if time_in_range(str(repo.created_at),self.repo_range):
             data_raw[repo.full_name] = {'time-created':str(repo.created_at)}
@@ -87,6 +89,7 @@ class GitScraper:
             data_raw[repo.full_name]['events']=[]
             data_raw[repo.full_name]['id']=repo.id
             data_raw[repo.full_name]['description']=repo.description
+        #print(data_raw)
         return data_raw
     
     def get_forks(self, data_raw, repo):
@@ -94,7 +97,7 @@ class GitScraper:
         n=0
         while forks:
             f=forks.pop()
-            if time_in_range(str(repo.created_at),time_period):
+            if time_in_range(str(f.created_at),self.event_range):
                 data_raw[repo]['events'].append({'event-type':'ForkEvent','name':f.full_name, 'time-created':str(f.created_at),'id':f.id})
                 n+=1
             #print('\t',f.full_name, f.created_at, f.id)
@@ -127,7 +130,7 @@ class GitScraper:
                 comments = list(f.get_comments())
                 while comments:
                     c=comments.pop()
-                    if time_in_range(str(c.created_at), self.range):
+                    if time_in_range(str(c.created_at), self.event_range):
                         comment = {'id':c.id,'time':str(c.created_at), 'login':c.user.login, 'comment':c.body}
                         data_raw[repo]['events'][-1]['comments'].append(comment)
                         push_comment +=1
@@ -141,14 +144,14 @@ class GitScraper:
         #print(len(watch), " watchers")
         while watch:
             f=watch.pop()
-            if time_in_range(str(f.created_at), None):
+            if time_in_range(str(f.created_at), self.event_range):
                 #print(f.login, f.created_at)
                 event = {'event-type':'WatchEvent','login':f.login, 'time':str(f.created_at),'id':f.id}
                 data_raw[repo]['events'].append(event)
                 watch_num +=1
         print("\tWatch Events in Range : ",watch_num)
 
-    def get_issues(self, repos_raw, repo):
+    def get_issues(self, data_raw, repo):
         num_issues = 0
         issue_comments = 0
             
@@ -165,13 +168,13 @@ class GitScraper:
                 comments = list(f.get_comments())
                 while comments:
                     c=comments.pop()
-                    if in_range(str(c.created_at), self.event_range):
+                    if time_in_range(str(c.created_at), self.event_range):
                         issue_comments+=1
                         comment  ={'login':c.user.login, 'id':c.id, 'comment':c.body}
-                        data_raw[repo.full_name]['events'][-1]['issue-comments'].append(comment)
+                        data_raw[repo]['events'][-1]['issue-comments'].append(comment)
    
-        print("Issues in Range: ",num_issues)
-        print("Issues Comments in Range: ",issue_comments)
+        print("\tIssues in Range: ",num_issues)
+        print("\tIssues Comments in Range: ",issue_comments)
 
     def get_pulls(self, data_raw,repo):
             
@@ -180,7 +183,7 @@ class GitScraper:
         pull_requests = list(data_raw[repo]['object'].get_pulls())
         while pull_requests:
             f=pull_requests.pop()
-            if in_range(str(f.created_at), self.event_range):
+            if time_in_range(str(f.created_at), self.event_range):
                 num_pull_reqs+=1
                 #print('\tpull: ',f.login, f.created_at, f.id)
                 pull={'event-type':'PullRequestEvent','login':f.user.login, 'time':str(f.created_at),'id':f.id,'pull-request-comments':[]}
@@ -194,19 +197,18 @@ class GitScraper:
                     num_comments+=1
                     comment= {'login':c.user.login, 'id':c.id, 'comment':c.body}
                     data_raw[repo]['events'][-1]['pull-request-comments'].append(comment)
-        print("Pull Requests in Range: ", num_pull_reqs)
-        print("Pull Request Comments in Range: ", num_comments)
+        print("\tPull Requests in Range: ", num_pull_reqs)
+        print("\tPull Request Comments in Range: ", num_comments)
 
 
 
     def get_create_and_delete(self, data_raw, repo):
-        
         stack = list(data_raw[repo]['object'].get_events())
         create=0
         delete=0
         while stack:
             e=stack.pop()
-            if in_range(str(e.created_at),self.event_range):
+            if time_in_range(str(e.created_at),self.event_range):
                 if e.type =='CreateEvent' or e.type=='DeleteEvent':
                     event ={'event-type':e.type, 'login':e.user.login, 'time':str(e.created_at), 'id':e.id,'description':e.description}
                     data_raw[repo]['events'].append(event)
@@ -215,27 +217,57 @@ class GitScraper:
                     else:
                         delete+=1
         print("\tCreate Events in Range: ", create)
-        print("\tDelete Events in Rannge", delete)
+        print("\tDelete Events in Range", delete)
     
-    def get_data_for_repo(self, data_raw, repo):
-        #data_raw = get_repo(repo,None)
-        #data_raw = self.get_repo(repo)
-        print("Time Range for Repos: ",self.repo_range)
-        print("Time Range for Events: ",self.event_range)
-        
+    def get_data_for_repo(self, repo):
+        #data_raw = get_repo(repo)
+        data_raw = self.get_repo_data(repo)
+        #print(data_raw)
+        print("Events for ", repo)
+        print("\tTime Range for Repos: ",self.repo_range)
+        print("\tTime Range for Events: ",self.event_range)
+        if not bool(data_raw):
+            return None
         do_thing(self.get_forks(data_raw, repo))
         do_thing(self.get_commits(data_raw, repo))
         do_thing(self.get_watch(data_raw, repo))
         do_thing(self.get_issues(data_raw, repo))
         do_thing(self.get_pulls(data_raw, repo))
         do_thing(self.get_create_and_delete(data_raw, repo))
+        return data_raw
         #self.data_raw = data_raw
+
+    
+    def get_data_for_repos(self, repos):
+        data = {}
+        for repo in repos:
+            data_raw = self.get_repo_data(repo)
+            #print(data_raw)
+            self.get_data_for_repo(repo)
+            #time.sleep(10)
+            if bool(data_raw):
+                data[repo] = data_raw[repo]
+        return data
+
+
+
+
+
+
+
+
 
 
 #repo_rng = ["2000-01-01 0:0:0", "2017-08-31 0:0:0"]
-#event_rng = ["2015-01-01 00:00:00","2017-8-31 00:00:00"]
-#scrappy = GitScraper("f7599bf79f708c5add325d4894184ebdae471f21", repo_rng,event_rng)
+repo_rng=None
+event_rng = ["2015-01-01 00:00:00","2017-8-31 00:00:00"]
+scrappy = GitScraper("f7599bf79f708c5add325d4894184ebdae471f21", repo_rng,event_rng)
 
+
+repos = ['akshaya23rad/StarterHacks-SAFEWALK-APP', 'NafizMahmud/Vehicle-Tracking-Service-VTS-', 'Shay72188/apk', 'tom-gall/AndroidScripts', 'khadas/android_test_vts-testcase_hal-trace', 'khadas/android_test_vts-testcase_nbu', 'CustomROMs/android_test_vts-testcase_hal', 'khadas/android_test_vts-testcase_security', 'khadas/android_test_vts-testcase_performance', 'khadas/android_test_vts-testcase_hal', 'khadas/android_test_vts-testcase_vndk', 'khadas/android_test_vts-testcase_fuzz', 'khadas/android_test_vts-testcase_kernel', 'tkaz/android-vts-master', 'netfleetorg/netfleet-vts-android', 'tkaz/Android_VTS_NVDMCNTT', 'vaginessa/android-vts-alternate', 'vaginessa/android-vts-STrace', 'khadas/android_test_vts', 'ravsimar-sodhi/VTS-android-eyes', 'bruceliu88/android_vts_base', 'masagatech/vts_android_app', 'millosr/android_test_vts', 'vchong/vts', 'wayyoung/android-vts', 'dineshkumarc987/android-vts', '5509850/vts', 'muhammadanis/vtsamplestoreAndroid', 'AndroidVTS/android-vts']
+data = scrappy.get_data_for_repos(repos)
+with open('result.json', 'w') as fp:
+    json.dump(data, fp)
 #repo = "gianpune/android-vts"
 #data_raw = scrappy.get_repo(repo)
 #scrappy.get_data_for_repo(data_raw,repo)

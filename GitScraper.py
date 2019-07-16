@@ -248,34 +248,3 @@ class GitScraper:
             if bool(data_raw):
                 data[repo] = data_raw[repo]
         return data
-
-
-
-
-
-
-
-
-
-
-#repo_rng = ["2000-01-01 0:0:0", "2017-08-31 0:0:0"]
-repo_rng=None
-event_rng = ["2015-01-01 00:00:00","2017-8-31 00:00:00"]
-scrappy = GitScraper("f7599bf79f708c5add325d4894184ebdae471f21", repo_rng,event_rng)
-
-
-repos = ['akshaya23rad/StarterHacks-SAFEWALK-APP', 'NafizMahmud/Vehicle-Tracking-Service-VTS-', 'Shay72188/apk', 'tom-gall/AndroidScripts', 'khadas/android_test_vts-testcase_hal-trace', 'khadas/android_test_vts-testcase_nbu', 'CustomROMs/android_test_vts-testcase_hal', 'khadas/android_test_vts-testcase_security', 'khadas/android_test_vts-testcase_performance', 'khadas/android_test_vts-testcase_hal', 'khadas/android_test_vts-testcase_vndk', 'khadas/android_test_vts-testcase_fuzz', 'khadas/android_test_vts-testcase_kernel', 'tkaz/android-vts-master', 'netfleetorg/netfleet-vts-android', 'tkaz/Android_VTS_NVDMCNTT', 'vaginessa/android-vts-alternate', 'vaginessa/android-vts-STrace', 'khadas/android_test_vts', 'ravsimar-sodhi/VTS-android-eyes', 'bruceliu88/android_vts_base', 'masagatech/vts_android_app', 'millosr/android_test_vts', 'vchong/vts', 'wayyoung/android-vts', 'dineshkumarc987/android-vts', '5509850/vts', 'muhammadanis/vtsamplestoreAndroid', 'AndroidVTS/android-vts']
-data = scrappy.get_data_for_repos(repos)
-with open('result.json', 'w') as fp:
-    json.dump(data, fp)
-#repo = "gianpune/android-vts"
-#data_raw = scrappy.get_repo(repo)
-#scrappy.get_data_for_repo(data_raw,repo)
-#print(data_raw.keys())
-#scrappy.get_forks(data_raw, "giantpune/android-vts", None)
-#scrappy.get_commits(data_raw, "giantpune/android-vts")
-#scrappy.get_watch(data_raw, "giantpune/android-vts")
-#scrappy.get_issues(data_raw, "giantpune/android-vts")
-#scrappy.get_pulls(data_raw, "giantpune/android-vts")
-
-#data = scrappy.get_repos("android-vts")

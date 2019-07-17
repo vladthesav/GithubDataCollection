@@ -20,6 +20,7 @@ def time_in_range(time, time_range):
     return False
 
 #because I don't feel like staring at a bunch of try/catch statements
+#this is to play nice with Github's rate limit
 def do_thing(thing):
     try:
         thing
@@ -27,6 +28,7 @@ def do_thing(thing):
         print(e)
         time.sleep(100)
         thing
+    time.sleep(60)
         
 def format_date(date):
     #print(date)
@@ -71,6 +73,7 @@ class GitScraper:
                 if time_in_range(str(repo.created_at),time_period):
                     data_raw[repo.full_name] = {'time-created':str(repo.created_at)}
                     data_raw[repo.full_name]['object'] = repo
+                    data_raw[repo.full_name]['url'] = repo.url
                     data_raw[repo.full_name]['events']=[]
                     data_raw[repo.full_name]['id']=repo.id
                     data_raw[repo.full_name]['description']=repo.description
@@ -98,7 +101,13 @@ class GitScraper:
         while forks:
             f=forks.pop()
             if time_in_range(str(f.created_at),self.event_range):
-                data_raw[repo]['events'].append({'event-type':'ForkEvent','name':f.full_name, 'time-created':str(f.created_at),'id':f.id})
+                event = {}
+                event['event-type']='ForkEvent'
+                event['name']=f.full_name
+                event['time-created']=str(f.created_at)
+                event['id']=f.id
+                event['node-id']=f.node_id
+                data_raw[repo]['events'].append(event)
                 n+=1
             #print('\t',f.full_name, f.created_at, f.id)
             
@@ -121,8 +130,14 @@ class GitScraper:
             time_created = get_date(f.url, self.auth)
             #print(time_created)
             if time_in_range(time_created, self.event_range):
-                
-                event = {'event-type':'PushEvent','author':str(f.author), 'comments':[], 'url':f.url, 'time':time_created}
+        
+                event = {}
+                event['event-type']='PushEvent'
+                event['author']=str(f.author)
+                event['comments']=[]
+                event['url']=f.url
+                event['time']=time_created
+                #event['node-id']=f.node_id
                 data_raw[repo]['events'].append(event)
                 
                 push+=1
@@ -240,11 +255,15 @@ class GitScraper:
     
     def get_data_for_repos(self, repos):
         data = {}
-        for repo in repos:
+        while repos:
+            repo = repos.pop()
             data_raw = self.get_repo_data(repo)
             #print(data_raw)
-            self.get_data_for_repo(repo)
-            #time.sleep(10)
+            do_thing(self.get_data_for_repo(repo))
             if bool(data_raw):
                 data[repo] = data_raw[repo]
         return data
+
+    def clean_data(self, data_raw):
+        for repo in data_raw.keys():
+            del data_raw[repo]['object']
